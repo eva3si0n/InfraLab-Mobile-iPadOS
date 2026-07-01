@@ -19,5 +19,5 @@ xcuserdata/
 # Swift Package Manager
 .build/
 
-# Local seed with secrets (token) — never commit
+# Local seed (real URLs/token) — only seed.example.json is committed
 Resources/Seed/seed.json

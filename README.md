@@ -1,4 +1,8 @@
-<h1 align="center">InfraLab for iPad</h1>
+<p align="center">
+  <img src="docs/screenshots/app-icon.png" width="120" alt="InfraLab icon">
+</p>
+
+<h1 align="center">InfraLab Mobile</h1>
 <p align="center"><sub>iPadOS</sub></p>
 
 <p align="center">
@@ -16,11 +20,10 @@
 
 ## What it does
 
-InfraLab for iPad is a SwiftUI client that pulls everything together, using a two-column
-**sidebar layout** (`NavigationSplitView`) tuned for iPad:
+InfraLab is a lightweight SwiftUI client that pulls everything together on your iPad — a sidebar + detail split layout tuned for iPadOS:
 
 - **Monitors** — your **Uptime Kuma** status page rendered natively: nodes are collapsible groups with an aggregate heartbeat rollup; tap one to expand every check (ping / port / DNS / push…) with its own Kuma-style heartbeat bar, latency and 24 h uptime.
-- **VPN Cascade** — live view of the non-RU egress cascade, read from **Prometheus** through the Grafana datasource proxy: which leg (STO / AMS / FI) is active per wired/mobile segment and for how long, WireGuard throughput, round-trip latency to each leg from the node and from home, and monthly Vultr traffic against the plan's cap.
+- **VPN Cascade** — live state of a WireGuard egress cascade: per segment the active leg with health / role badges, WG throughput and per-leg RTT, a nested Kuma cascade monitor, egress-leg ping-from-home + monthly traffic vs cap, and a migration history.
 - **Metrics** — a list of your **Grafana** dashboards; open one and every panel is drawn **natively** (Swift Charts for time series, plus stat / gauge / bar-gauge / table) straight from the dashboard's PromQL. No screenshots, no embedded web view.
 - **HomePage** — your [gethomepage](https://gethomepage.dev) portal shown in an in-app web view.
 
@@ -30,9 +33,9 @@ Everything is read-only, dark-mode first, and refreshes on a timer or pull-to-re
 
 | Section | Source | API |
 |---|---|---|
-| Monitors | Uptime Kuma | public status-page endpoints (`/api/status-page/<slug>`, `/api/status-page/heartbeat/<slug>`) |
-| VPN Cascade | Grafana / Prometheus | Prometheus via the datasource proxy (`/api/datasources/proxy/uid/<ds>/api/v1/query`) |
-| Metrics | Grafana | `/api/search`, `/api/dashboards/uid/<uid>`, and Prometheus via the datasource proxy (`…/query[_range]`) |
+| Monitors / VPN Cascade | Uptime Kuma | public status-page endpoints (`/api/status-page/<slug>`, `/api/status-page/heartbeat/<slug>`) |
+| VPN Cascade / Metrics | Grafana → Prometheus | datasource proxy (`/api/datasources/proxy/uid/<ds>/api/v1/query[_range]`) |
+| Metrics | Grafana | `/api/search`, `/api/dashboards/uid/<uid>` |
 | HomePage | gethomepage | rendered in `WKWebView` |
 
 No backend of its own — it just calls the services you already run. Point it at them over your LAN/VPN or a reverse proxy.
@@ -59,7 +62,7 @@ Set your own signing team in `project.yml` (`DEVELOPMENT_TEAM`), then build & ru
 
 ## Configuration
 
-All endpoints are entered in the **Settings** section on first launch — nothing is hardcoded:
+All endpoints are entered in the **Settings** tab on first launch — nothing is hardcoded:
 
 | Field | Example |
 |---|---|
@@ -68,10 +71,10 @@ All endpoints are entered in the **Settings** section on first launch — nothin
 | Kuma API Key | *(optional — leave empty for public status pages)* |
 | Grafana Base URL | `https://grafana.example.com` |
 | Grafana Datasource UID | `prometheus` |
-| Grafana Service-Account Token | *(Viewer token)* |
+| Grafana Service-Account Token | *(Viewer/Editor token)* |
 | HomePage URL | `https://home.example.com` |
 
-Tokens are stored in the **Keychain**; plain settings live in `UserDefaults`. For native Grafana charts and the VPN Cascade view to work, the service-account token needs read access to the dashboards and their Prometheus datasource.
+Tokens are stored in the **Keychain**; plain settings live in `UserDefaults`. For native Grafana charts to work, the service-account token needs read access to the dashboards and their Prometheus datasource.
 
 ## License
 
@@ -81,19 +84,19 @@ Tokens are stored in the **Keychain**; plain settings live in `UserDefaults`. Fo
 
 ## По-русски
 
-**InfraLab for iPad** (iPadOS) — нативный iPad-дашборд для домашней лаборатории / self-hosted стека: **Uptime Kuma**, **Grafana** и портал **Homepage** в одном приложении, с двухколоночным **sidebar-макетом** (`NavigationSplitView`) под большой экран. iPhone: [InfraLab-Mobile-iOS](https://github.com/eva3si0n/InfraLab-Mobile-iOS) · Android: [InfraLab-Mobile-Android](https://github.com/eva3si0n/InfraLab-Mobile-Android).
+**InfraLab Mobile** (iPadOS) — нативный iPad-дашборд для домашней лаборатории / self-hosted стека: **Uptime Kuma**, **Grafana** и портал **Homepage** в одном приложении, с раскладкой «сайдбар + деталь» под большой экран. iPhone-версия: [InfraLab-Mobile-iOS](https://github.com/eva3si0n/InfraLab-Mobile-iOS), Android: [InfraLab-Mobile-Android](https://github.com/eva3si0n/InfraLab-Mobile-Android).
 
-- **Monitors** — статус-страница **Uptime Kuma** нативно: узлы — сворачиваемые группы со сводной heartbeat-шкалой; тап разворачивает все проверки (ping / port / DNS / push…), у каждой своя шкала, задержка и аптайм за 24 ч.
-- **VPN Cascade** — живое состояние не-RU egress-каскада из **Prometheus** через Grafana-прокси: какое плечо (STO / AMS / FI) активно по проводному/мобильному сегменту и сколько держится, throughput WireGuard, задержки до каждого плеча с узла и из дома, месячный трафик Vultr против лимита.
-- **Metrics** — список дашбордов **Grafana**; все панели рисуются **нативно** (Swift Charts + stat / gauge / bar-gauge / table) прямо по PromQL. Без скриншотов и встроенного веба.
+- **Monitors** — статус-страница **Uptime Kuma** нативно: узлы — сворачиваемые группы со сводной heartbeat-шкалой; тап разворачивает все проверки (ping / port / DNS / push…), у каждой своя Kuma-style шкала, задержка и аптайм за 24 ч.
+- **VPN Cascade** — состояние каскада WireGuard-egress в реальном времени: по каждому сегменту активное плечо с бейджами здоровья/роли, throughput WG и RTT по плечам, вложенный Kuma-монитор каскада, пинг из дома + месячный трафик против лимита и история миграций.
+- **Metrics** — список дашбордов **Grafana**; открываешь — панели рисуются **нативно** (Swift Charts для time series + stat / gauge / bar-gauge / table) прямо по PromQL. Без скриншотов и встроенного веба.
 - **HomePage** — портал [gethomepage](https://gethomepage.dev) во встроенном web-view.
 
-Только чтение, тёмная тема, обновление по таймеру или pull-to-refresh. Своего бэкенда нет — приложение обращается к уже поднятым сервисам (по LAN/VPN или через reverse-proxy).
+Только чтение, тёмная тема, обновление по таймеру или pull-to-refresh. Своего бэкенда нет — приложение обращается к сервисам, которые у тебя уже подняты (по LAN/VPN или через reverse-proxy).
 
 **Требования:** iPadOS 17+, Xcode 16+, [XcodeGen](https://github.com/yonaskolb/XcodeGen).
 
 **Сборка:** `brew install xcodegen` → `xcodegen generate` → открыть `InfraLabPad.xcodeproj`. Укажи свою команду подписи в `project.yml` (`DEVELOPMENT_TEAM`).
 
-**Настройка:** все адреса вводятся в разделе **Settings** при первом запуске — в коде ничего не зашито. Токены хранятся в **Keychain**.
+**Настройка:** все адреса вводятся во вкладке **Settings** при первом запуске — в коде ничего не зашито. Токены хранятся в **Keychain**.
 
 **Лицензия:** [MIT](LICENSE) © Ivan Serditykh

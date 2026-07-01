@@ -13,6 +13,7 @@ struct SettingsView: View {
             homePageSection
             generalSection
             actionsSection
+            aboutSection
         }
         .navigationTitle("Settings")
     }
@@ -110,6 +111,23 @@ struct SettingsView: View {
             .listRowInsets(.init())
             .padding(.horizontal)
         }
+    }
+
+    private var aboutSection: some View {
+        Section {
+            HStack {
+                Spacer()
+                Text(versionString).font(.footnote).foregroundStyle(.secondary)
+                Spacer()
+            }
+            .listRowBackground(Color.clear)
+        }
+    }
+
+    private var versionString: String {
+        let v = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
+        let b = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?"
+        return "InfraLab Mobile v\(v) (build \(b))"
     }
 
     // MARK: - Helpers
