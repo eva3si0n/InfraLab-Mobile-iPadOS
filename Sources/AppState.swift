@@ -33,6 +33,14 @@ final class AppState: ObservableObject {
     @Published var dashboardsLoading = false
     @Published var dashboardsError: String?
 
+    // VPN Cascade layout — loaded from the bundled seed.json (structural, not user settings).
+    // Placeholder defaults keep public builds working without leaking real infra names.
+    private(set) var cascadeSegments: [CascadeSegmentCfg] = [
+        .init(host: "node-a", title: "Wired · FQDN хоста", kumaGroup: "Node A", cascadeMatch: "node-a"),
+        .init(host: "node-b", title: "Mobile · FQDN хоста", kumaGroup: "Node B", cascadeMatch: "node-b")
+    ]
+    private(set) var cascadeTrafficHosts: [String: String] = [:]
+
     // MARK: - Private
 
     private let ud = UserDefaults.standard
@@ -49,6 +57,7 @@ final class AppState: ObservableObject {
         let stored = ud.double(forKey: "refreshInterval")
         refreshInterval = stored > 0 ? stored : 30
         seedFromBundleIfNeeded()
+        loadCascadeConfig()
     }
 
     var isConfigured: Bool {
@@ -61,6 +70,8 @@ final class AppState: ObservableObject {
         var kumaBaseURL, kumaSlug, kumaAPIKey: String?
         var grafanaBaseURL, grafanaDatasourceUID, grafanaToken: String?
         var homePageBaseURL: String?
+        var cascadeSegments: [CascadeSegmentCfg]?
+        var cascadeTrafficHosts: [String: String]?
     }
 
     private func seedFromBundleIfNeeded() {
@@ -75,6 +86,16 @@ final class AppState: ObservableObject {
         if let v = s.homePageBaseURL { homePageBaseURL = v }
         if let v = s.kumaAPIKey, !v.isEmpty { kumaAPIKey = v }
         if let v = s.grafanaToken, !v.isEmpty { grafanaToken = v }
+    }
+
+    /// Cascade layout comes from the bundled seed.json on every launch — real node / group
+    /// names live only there (gitignored). Falls back to placeholder defaults in public builds.
+    private func loadCascadeConfig() {
+        guard let url = Bundle.main.url(forResource: "seed", withExtension: "json"),
+              let data = try? Data(contentsOf: url),
+              let s = try? JSONDecoder().decode(SeedConfig.self, from: data) else { return }
+        if let segs = s.cascadeSegments, !segs.isEmpty { cascadeSegments = segs }
+        if let th = s.cascadeTrafficHosts { cascadeTrafficHosts = th }
     }
 
     // MARK: - Refresh orchestration

@@ -45,6 +45,16 @@ struct MonitorStatus: Identifiable {
     let recentBeats: [KumaHeartbeat]
 }
 
+/// VPN Cascade segment config — real host / Kuma-group names live only in the personal
+/// (gitignored) seed.json; public code / seed.example.json carry placeholders.
+struct CascadeSegmentCfg: Codable, Identifiable {
+    var id: String { host }
+    let host: String
+    let title: String
+    let kumaGroup: String
+    let cascadeMatch: String
+}
+
 // MARK: - Prometheus (native charts via Grafana datasource proxy)
 
 /// One time-series line ready to render.

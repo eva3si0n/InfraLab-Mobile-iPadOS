@@ -23,10 +23,6 @@ struct CascadeView: View {
     @State private var loading = false
     @State private var errText: String?
 
-    private let segCfg: [(host: String, title: String, group: String, match: String)] = [
-        ("node-a", "Wired · node-a (UDM Pro — VLAN 30, 40)", "Node A", "node-a"),
-        ("node-b", "Mobile · node-b (UniFi APs + LTE — VLAN 70, 80)", "Node B", "node-b")
-    ]
     private let cascadeHint = "up — активное плечо STO/AMS (чистый Vultr-egress); down — деградация на FI (оба Vultr-плеча недоступны) или несвежий handshake."
     private let egressHint = "Лимит Vultr 2 ТБ на инстанс (STO и AMS отдельно), считается outbound (tx), сброс 1-го числа. FI — cold standby, квота не отслеживается."
 
@@ -80,7 +76,7 @@ struct CascadeView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 8) {
                 Circle().fill((s.cascade?.isUp ?? false) ? Color.green : Color.red).frame(width: 8, height: 8)
-                Text("Cascade — \(s.host == "node-a" ? "Wired" : "Mobile") (\(s.host))")
+                Text("Cascade — \(segLabel(s.host))")
                     .font(.subheadline)
                 Spacer()
             }
@@ -131,7 +127,7 @@ struct CascadeView: View {
             } else {
                 ForEach(history) { m in
                     HStack(spacing: 8) {
-                        Text(m.host == "node-a" ? "Wired" : "Mobile")
+                        Text(segLabel(m.host))
                             .font(.caption).foregroundStyle(.secondary).frame(width: 52, alignment: .leading)
                         pill(m.from.uppercased(), legColor(m.from))
                         Image(systemName: "arrow.right").font(.caption2).foregroundStyle(.secondary)
@@ -154,6 +150,12 @@ struct CascadeView: View {
             .background(c.opacity(0.18)).foregroundStyle(c).clipShape(Capsule())
     }
     private func legColor(_ l: String) -> Color { l == "sto" ? .green : (l == "ams" ? .orange : (l == "fi" ? .red : .secondary)) }
+
+    // Short segment label (part of the title before " · "), resolved from config by host.
+    private func segLabel(_ host: String) -> String {
+        guard let title = appState.cascadeSegments.first(where: { $0.host == host })?.title else { return host }
+        return title.components(separatedBy: " · ").first ?? title
+    }
 
     private func fmtDur(_ s: Double) -> String {
         let t = Int(s), h = t / 3600, m = (t % 3600) / 60
@@ -188,7 +190,7 @@ struct CascadeView: View {
             let lim   = try await appState.promInstant("vds_month_limit_bytes", legend: "")
             let sw    = try await appState.promInstant("vpn_egress_switch_time", legend: "")
 
-            segs = segCfg.map { cfg in
+            segs = appState.cascadeSegments.map { cfg in
                 let al = active.first { $0.labels["host"] == cfg.host }?.labels["leg"] ?? "—"
                 let ds = durQ.first { $0.labels["host"] == cfg.host }?.value ?? 0
                 var rm: [String: Double] = [:]
@@ -196,16 +198,16 @@ struct CascadeView: View {
                 // Healthy = node reachability (Ping + SSH). Feature/cascade checks (FI handshake,
                 // Geo Routing, services) are shown separately and don't gate node health — FI is
                 // cold-standby, so its dead-man monitors are expected down while on STO/AMS.
-                let reach = appState.monitors.filter { $0.groupName == cfg.group && ($0.name == "Ping" || $0.name == "SSH") }
+                let reach = appState.monitors.filter { $0.groupName == cfg.kumaGroup && ($0.name == "Ping" || $0.name == "SSH") }
                 let healthy = !reach.isEmpty && reach.allSatisfy { $0.isUp }
-                let casc = appState.monitors.first { $0.groupName == "VPN Cascade" && $0.name.contains(cfg.match) }
+                let casc = appState.monitors.first { $0.groupName == "VPN Cascade" && $0.name.contains(cfg.cascadeMatch) }
                 return Seg(host: cfg.host, title: cfg.title, activeLeg: al, activeSeconds: ds, rtt: rm,
                            txBps: txbps.first { $0.labels["host"] == cfg.host }?.value,
                            rxBps: rxbps.first { $0.labels["host"] == cfg.host }?.value,
                            healthy: healthy, cascade: casc)
             }
             legs = ["sto", "ams", "fi"].map { l in
-                let host = l == "sto" ? "egress-a" : (l == "ams" ? "egress-b" : "")
+                let host = appState.cascadeTrafficHosts[l] ?? ""
                 return Leg(leg: l, homeRTT: home.first { $0.labels["node"] == l }?.value,
                            txBytes: host.isEmpty ? nil : tx.first { $0.labels["host"] == host }?.value,
                            limitBytes: host.isEmpty ? nil : lim.first { $0.labels["host"] == host }?.value)
