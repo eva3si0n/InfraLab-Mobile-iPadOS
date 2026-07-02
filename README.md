@@ -76,6 +76,12 @@ All endpoints are entered in the **Settings** tab on first launch — nothing is
 
 Tokens are stored in the **Keychain**; plain settings live in `UserDefaults`. For native Grafana charts to work, the service-account token needs read access to the dashboards and their Prometheus datasource.
 
+## Screenshots
+
+### VPN Cascade
+
+<p align="center"><img src="docs/screenshots/cascade.png" width="300" alt="VPN Cascade tab"></p>
+
 ## License
 
 [MIT](LICENSE) © Ivan Serditykh
